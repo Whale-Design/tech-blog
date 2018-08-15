@@ -4,7 +4,7 @@
 
 题目：请写出以下php语句执行输出的结果：
 
-```
+```php
 <?php
     $arr = [1,2,3];  
     foreach($arr as &$value){
@@ -25,7 +25,7 @@
 
 那下面我们来分析一下为何会有这样的结果。如下：
 
-```
+```php
 <?php
     $arr = [1,2,3];  
     foreach($arr as &$value){
@@ -59,16 +59,65 @@
 不知道上述是否能让你有所收获，结尾我们还有一道题，来看一下吧。
 
 题目：请写出以下php语句执行输出结果：  
-```
+```php
 <?php
     $arr = [1,2,3];  
     foreach($arr as $value){
     	unset($value);
     }
-    print_r($arr);
+    var_dump($arr);
     
     foreach($arr as &$value){
     	unset($value);
     }
-    print_r($arr);
+    var_dump($arr);
 ```
+```
+输出：
+    array(3) { [0]=> int(1) [1]=> int(2) [2]=> int(3) } 
+    array(3) { [0]=> int(1) [1]=> int(2) [2]=> int(3) } 
+```
+
+## 由foreach引发的关于PHP底层变量存储的思考
+
+> 本文首发于 [zval _ 引用计数 _ 变量分离 _ 写时拷贝](https://segmentfault.com/a/1190000004340427)
+
+经过上文中的两个题目后不知道你有没有对foreach的机制了解的更清楚一点了呢？不如我们再来看一个题目：
+
+```php
+<?php
+    $arr = [1,2,3];  
+    foreach($arr as $value){
+        if($value <= 2){
+            $arr[] = $value * 10;
+        }
+        echo $value . "<br />";
+    }
+    var_dump($arr);
+    echo "<br />";
+    echo "<br />";
+    $arr = [1,2,3];
+    foreach($arr as &$value){
+        if($value <= 2){
+            $arr[] = $value * 10;
+        }
+        echo $value . "<br />";
+    }
+    var_dump($arr);
+```
+```
+输出：
+    1
+    2
+    3
+    array(5) { [0]=> int(1) [1]=> int(2) [2]=> int(3) [3]=> int(10) [4]=> int(20) } 
+
+    1
+    2
+    3
+    10
+    20
+    array(5) { [0]=> int(1) [1]=> int(2) [2]=> int(3) [3]=> int(10) [4]=> &int(20) } 
+```
+
+看到这个题目有没有清楚一点呢？当我们对数据循环时相当于先对数据进行了拷贝，在数组循环体中如果要改变原数组的值或者往原数组中插入新的元素都需要对`$arr`进行赋值操作，且新插入的元素不会被循环。而foreach引用赋值时，修改原数组的值只需要对相对应的元素的`$value`值进行修改就好，且新插入的元素会被循环。这究竟是为什么呢？为什么会是这样一种机制呢？下面我们来了解一下PHP的zval存储结构。

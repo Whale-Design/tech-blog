@@ -1,4 +1,4 @@
-### ThinkPHP5数据库迁移工具think-migration的使用
+## ThinkPHP5数据库迁移工具think-migration的使用
 
 为了项目上线方便，想到了laravel框架中的数据库迁移工具Migrations，tp5下一搜索果然也有相应的封装，二话不说：  
 
@@ -26,7 +26,7 @@
 
 打开文件`create_users_table.php`，内容如下：
 
-``` php
+```php
 <?php
 
 use think\migration\Migrator;
@@ -64,7 +64,7 @@ class CreateUsersTable extends Migrator
 
 我们可以看到模版文件中有一个`change()`方法，通过了解[Phinx文档](http://docs.phinx.org/en/latest/)我们能够知道`change()`方法是不支持回滚的，所以我们可以使用下面的方法：
 
-``` php
+```php
 <?php
 
 use think\migration\Migrator;
