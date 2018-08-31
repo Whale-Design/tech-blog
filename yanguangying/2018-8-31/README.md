@@ -1,4 +1,4 @@
-# javascripe中的标签语句
+# javascript中的标签语句
 ```
     //看代码
     function a() {
