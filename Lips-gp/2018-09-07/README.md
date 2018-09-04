@@ -240,7 +240,7 @@ typedef struct _zend_refcounted_h {
 	unset($a); // $a = zval_1(type=IS_UNDEF)
 	           // $b = zval_2(type=IS_LONG, value=42)
 ```
-这个过程其实挺简单的。现在整数不再是共享的，变量直接就会分离成两个单独的`zval`，由于现在`zval`是内嵌的所以也不需要单独分配内存，所以这里的注释中使用`=`来表示的而不是指针符号`->``unset`时变量会被标记为`IS_UNDEF`。下面看一下更复杂的情况：
+这个过程其实挺简单的。现在整数不再是共享的，变量直接就会分离成两个单独的`zval`，由于现在`zval`是内嵌的所以也不需要单独分配内存，所以这里的注释中使用`=`来表示的而不是指针符号`->`，`unset`时变量会被标记为`IS_UNDEF`。下面看一下更复杂的情况：
 ```php
 <?php
 	$a = [];   // $a = zval_1(type=IS_ARRAY) -> zend_array_1(refcount=1, value=[])
