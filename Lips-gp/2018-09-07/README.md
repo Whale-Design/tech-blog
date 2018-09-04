@@ -223,6 +223,7 @@ typedef struct _zend_refcounted_h {
 |object          |      x     |      x      |          |		  |
 |resource        |      x     |             |          |		  |
 |reference       |      x     |             |          |		  |
+
 要理解这一点，我们可以来看几个例子，这样可以更好的认识`zval`内存管理是怎么工作的。
 
 下面是整数行为模式，在上文中PHP5的例子的基础上进行了一些简化 ：
