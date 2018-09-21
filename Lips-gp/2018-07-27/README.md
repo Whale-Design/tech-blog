@@ -194,7 +194,7 @@ $var_dup = $var;
 第二行，创建了一个新的整形变量（通过赋值的方式），变量也指向刚才创建的zval，并将这个zval的refcount加1，此时这个zval的refcount为2。所以，这个时候（通过值传递的方式赋值给别的变量），并没有产生新的zval，两个变量指向同一zval，通过一个计数器来共用zval及内存地址，以达到节省内存空间的目的。
 当一个变量被第一次创建的时候，它对应的zval结构的refcount的值会被初始化为1，因为只有这一个变量在用它。但是当你把这个变量赋值给别的变量时，refcount属性便会加1变成2，因为现在有两个变量在用这个zval结构了。
 
-PHP提供了一个debug_zval_dump()函数可以帮助我们了解这个过程，但是debug_zval_dump()函数不太好用，输出的跟实际情况有点不符。幸运的是PHP的xdebug扩展提供了xdebug_debug_zval()函数：
+PHP提供了一个debug_zval_dump()函数可以帮助我们了解这个过程，但是debug_zval_dump()函数不太好用，输出的跟实际情况有点不符。幸运的是PHP的xdebug扩展提供了xdebug_debug_zval()函数，看下面两个例子：
 
 ```php
 <?php
@@ -211,9 +211,6 @@ var:
 var_dup:
 (refcount=2, is_ref=0),int 1
 ```
-
-如果你奇怪 ，var的refcount应该是1啊？
-我们知道，对于简单变量，PHP是以传值的形式传参数的。也就是说，当执行debug_zval_dump($var)的时候，$var会以传值的方式传递给debug_zval_dump，也就是会导致var的refcount加1，所以只要能看到，当变量赋值给一个变量以后，能导致zval的refcount加1这个结果即可：
 
 ```php
 <?php
@@ -273,7 +270,7 @@ var_dup:
 这段代码是PHP很常见的一种赋值操作。我们上面了解到当代码执行到第二行的时候变量`$var`和`$var_dup`实际上都是指向了同一内存地址。那如果此时在执行第三行在zval结构上又是怎样实现的呢？  
 
 这里我们就要了解一下PHP的写时拷贝（copy on write）机制：  
-PHP在修改一个变量以前，会首先查看这个变量的refcount，如果refcount大于1，PHP就会执行一个分离的过程（在Zend引擎中，分离是破坏一个引用对的过程）。对于上面的代码，当执行到第三行的时候，PHP发现`$var`想要改变，但它指向的zval的refcount大于1，那么PHP就会复制一个新的zval出来，改变其值，将改变的变量指向新的zval，并将原zval的refcount减1，并修改symbol_table里该变量的指针，使得`$var`和`$var_dup`分离(Separation)。这个机制就是所谓的copy on write（写时复制，这里的写包括普通变量的修改及数组对象里的增加、删除单元操作）。
+PHP在修改一个变量以前，会首先查看这个变量的refcount，如果refcount大于1，PHP就会执行一个分离的过程（在Zend引擎中，分离是破坏一个引用对的过程）。对于上面的代码，当执行到第三行的时候，PHP发现`$var`想要改变，但它指向的zval的refcount大于1，那么PHP就会复制一个新的zval出来，改变其值，将改变的变量指向新的zval，并将原zval的refcount减1，并修改symbol_table里该变量的指针。这个机制就是所谓的copy on write（写时复制，这里的写包括普通变量的修改及数组对象里的增加、删除单元操作）。
 
 ### 写时改变（change on write）
 
@@ -298,9 +295,9 @@ var:
 ```
 
 这段代码结束后我们知道变量`$var`也会被修改为1，这个过程即为：写时改变（change on write）。  
-那么ZE是怎么知道，这次的复制不需要Separation呢？  
+那么ZE是怎么知道，这次赋值时不需要复制呢？  
 这个时候就要用到zval中的is_ref字段了：  
-对于上面的代码，当第二行执行以后，`$var`所代表的zval的refcount变为2，并且设置is_ref为1。到第三行的时候，PHP先检查`$var_dup`对应的zval的is_ref字段（is_ref 表示该zval是否被&引用，仅表示真或假，就像开关的开与关一样，zval的初始化情况下为0，即非引用），如果为1，则不分离，直接更改（否则需要执行刚刚提到的zval分离），更改共享的zval实际上也间接更改了$var的值，因为引擎想所有的引用变量都看到这一改变。
+对于上面的代码，当第二行执行以后，`$var`所代表的zval的refcount变为2，并且设置is_ref为1。到第三行的时候，PHP先检查`$var_dup`对应的zval的is_ref字段（is_ref 表示该zval是否被&引用，仅表示真或假，就像开关的开与关一样，zval的初始化情况下为0，即非引用），如果为1，则不需要拷贝，直接更改，更改共享的zval实际上也间接更改了$var的值，因为引擎想所有的引用变量都看到这一改变。
 
 
 ### 写时分离
@@ -310,6 +307,8 @@ var:
 <?php 
 $var = 'dmxy';
 $var_dup = $var;
+xdebug_debug_zval('var_dup');
+xdebug_debug_zval('var');
 $var_ref = &$var;
 xdebug_debug_zval('var_dup');
 xdebug_debug_zval('var');
@@ -317,6 +316,11 @@ xdebug_debug_zval('var_ref');
 ```
 ```
 输出：
+var_dup:
+(refcount=2, is_ref=0),string 'dmxy' (length=4)
+var:
+(refcount=2, is_ref=0),string 'dmxy' (length=4)
+
 var_dup:
 (refcount=1, is_ref=0),string 'dmxy' (length=4)
 var:
