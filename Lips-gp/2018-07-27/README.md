@@ -194,7 +194,7 @@ $var_dup = $var;
 第二行，创建了一个新的整形变量（通过赋值的方式），变量也指向刚才创建的zval，并将这个zval的refcount加1，此时这个zval的refcount为2。所以，这个时候（通过值传递的方式赋值给别的变量），并没有产生新的zval，两个变量指向同一zval，通过一个计数器来共用zval及内存地址，以达到节省内存空间的目的。
 当一个变量被第一次创建的时候，它对应的zval结构的refcount的值会被初始化为1，因为只有这一个变量在用它。但是当你把这个变量赋值给别的变量时，refcount属性便会加1变成2，因为现在有两个变量在用这个zval结构了。
 
-PHP提供了一个函数可以帮助我们了解这个过程debug_zval_dump：
+PHP提供了一个debug_zval_dump()函数可以帮助我们了解这个过程，但是debug_zval_dump()函数不太好用，输出的跟实际情况有点不符。幸运的是PHP的xdebug扩展提供了xdebug_debug_zval()函数：
 
 ```php
 <?php
