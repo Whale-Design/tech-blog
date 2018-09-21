@@ -56,14 +56,14 @@
 对于普通的变量来说，这一切似乎很正常，但是在复合类型变量（数组和对象）中，会发生比较有意思的事情：
 ```php
 <?php
-	$a = array('meaning' => 'life', 'number' => 42);
+    $a = array('meaning' => 'life', 'number' => 42);
 ?>
 ```
 a的内部存储信息为:
 ```c
 a: (refcount=1, is_ref=0)=array (
-	'meaning' => (refcount=1, is_ref=0)='life',
-	'number' => (refcount=1, is_ref=0)=42
+    'meaning' => (refcount=1, is_ref=0)='life',
+    'number' => (refcount=1, is_ref=0)=42
 )
 ```
 
