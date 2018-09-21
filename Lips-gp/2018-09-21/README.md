@@ -49,7 +49,7 @@
 <?php
     $a = "new string"; 		//a: (refcount=1, is_ref=0)='new string'
     $b = $a;                //a,b: (refcount=2, is_ref=0)='new string'
-	unset($b);              //a: (refcount=1, is_ref=0)='new string'
+    unset($b);              //a: (refcount=1, is_ref=0)='new string'
 ?>
 ```
 
