@@ -18,7 +18,7 @@
 
 假设我们有一段PHP代码，使用了一个临时变量`$tmp`存储了一个字符串，在处理完字符串之后，就不需要这个`$tmp`变量了，`$tmp`变量对于我们来说可以算是一个“垃圾”了，但是对于GC来说，`$tmp`其实并不是一个垃圾，`$tmp`变量对我们没有意义，但是这个变量实际还存在，`$tmp`符号依然指向它所对应的`zval`，GC会认为PHP代码中可能还会使用到此变量，所以不会将其定义为垃圾。
 
-那么如果我们在PHP代码中使用完`$tmp`后，调用`unset`删除这个变量，那么`$tmp`是不是就成为一个垃圾了呢。很可惜，GC仍然不认为`$tmp`是一个垃圾，因为`$tmp`在`unset`之后，`refcount`减少1变成了0(这里假设没有别的变量和`$tmp`指向相同的`zval`),这个时候GC会直接将`$tmp`对应的`zval`的内存空间释放，`$tmp`和其对应的`zval`就根本不存在了。此时的`$tmp`也不是新的GC所要对付的那种“垃圾”。那么新的GC究竟要对付什么样的垃圾呢，下面我们将生产一个这样的垃圾。  
+那么如果我们在PHP代码中使用完`$tmp`后，调用`unset`删除这个变量，那么`$tmp`是不是就成为一个垃圾了呢。很可惜，GC仍然不认为`$tmp`是一个垃圾，因为`$tmp`在`unset`之后，`refcount`减少1变成了0(这里假设没有别的变量和`$tmp`指向相同的`zval`)，这个时候GC会直接将`$tmp`对应的`zval`的内存空间释放，`$tmp`和其对应的`zval`就根本不存在了。此时的`$tmp`也不是新的GC所要对付的那种“垃圾”。那么新的GC究竟要对付什么样的垃圾呢，下面我们将生产一个这样的垃圾。  
 
 
 ### 顽固垃圾的产生过程
@@ -26,9 +26,7 @@
 如果读者已经阅读了变量内部存储相关的内容，想必对`refcount`和`isref`这些变量内部的信息有了一定的了解。这里我们将结合手册中的一个例子来介绍垃圾的产生过程：
 ```php
 <?php
-
-	$a = "new string";
-
+    $a = "new string";
 ?>
 ```
 在这么简单的一个代码中，`$a`变量内部存储信息为
@@ -38,10 +36,8 @@
 当把`$a`赋值给另外一个变量的时候，`$a`对应的`zval`的`refcount`会加1
 ```php
 <?php
-
-	$a = "new string";
-	$b = $a;
-
+    $a = "new string";
+    $b = $a;
 ?>
 ```
 此时`$a`和`$b`变量对应的内部存储信息为
@@ -51,24 +47,20 @@
 当我们用`unset`删除`$b`变量的时候，`$b`对应的`zval`的`refcount`会减少1
 ```php
 <?php
-
-	$a = "new string"; 		//a: (refcount=1, is_ref=0)='new string'
-	$b = $a;                //a,b: (refcount=2, is_ref=0)='new string'
+    $a = "new string"; 		//a: (refcount=1, is_ref=0)='new string'
+    $b = $a;                //a,b: (refcount=2, is_ref=0)='new string'
 	unset($b);              //a: (refcount=1, is_ref=0)='new string'
-
 ?>
 ```
 
 对于普通的变量来说，这一切似乎很正常，但是在复合类型变量（数组和对象）中，会发生比较有意思的事情：
 ```php
 <?php
-
 	$a = array('meaning' => 'life', 'number' => 42);
-
 ?>
 ```
 a的内部存储信息为:
-```
+```c
 a: (refcount=1, is_ref=0)=array (
 	'meaning' => (refcount=1, is_ref=0)='life',
 	'number' => (refcount=1, is_ref=0)=42
@@ -84,14 +76,12 @@ a: (refcount=1, is_ref=0)=array (
 下面在`$a`中添加一个元素，并将现有的一个元素的值赋给新的元素:
 ```php
 <?php
-
-$a = array('meaning' => 'life', 'number' => 42);
-$a['life'] = $a['meaning'];
-
+    $a = array('meaning' => 'life', 'number' => 42);
+    $a['life'] = $a['meaning'];
 ?>
 ```
 那么`$a`的内部存储为:
-```
+```c
 a: (refcount=1, is_ref=0)=array (
    'meaning' => (refcount=2, is_ref=0)='life',
    'number' => (refcount=1, is_ref=0)=42,
@@ -105,14 +95,12 @@ a: (refcount=1, is_ref=0)=array (
 现在，如果我们试一下，将数组的引用赋值给数组中的一个元素，有意思的事情就发生了：
 ```php
 <?php
-
-$a = array('one');
-$a[] = &$a;
-
+    $a = array('one');
+    $a[] = &$a;
 ?>
 ```
 这样`$a`数组就有两个元素，一个索引为0，值为字符one,另外一个索引为1，为$a自身的引用，内部存储如下:
-```
+```c
 a: (refcount=2, is_ref=1)=array (
    0 => (refcount=1, is_ref=0)='one',
    1 => (refcount=2, is_ref=1)=...
@@ -125,11 +113,9 @@ a: (refcount=2, is_ref=1)=array (
 这个时候我们对$a进行`unset`,那么`$a`会从符号表中删除，同时`$a`指向的`zval`的`refcount`减少1
 ```php
 <?php
-
-$a = array('one');
-$a[] = &$a;
-unset($a);
-
+    $a = array('one');
+    $a[] = &$a;
+    unset($a);
 ?>
 ```
 那么问题也就产生了，`$a`已经不在符号表中了，用户无法再访问此变量，但是`$a`之前指向的`zval`的`refcount`变为1而不是0，因此不能被回收，这样产生了内存泄露：
