@@ -1,10 +1,3 @@
----
-title: 'JavaScript的线程,队列与event loop'
-date: 2018-07-09 14:18:51
-tags:
-    - 'javaScript'
-categories: 'javaScript'
----
 
 # 导读
 
