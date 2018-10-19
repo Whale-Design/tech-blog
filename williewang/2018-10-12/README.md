@@ -43,7 +43,7 @@ min: 4
 
 问：时间复杂度是多少？
 
-答：pop是o(1)，其他操作是o(1)，空间复杂度是o(1)
+答：pop是o(n)，其他操作是o(1)，空间复杂度是o(1)
 
 问：如果要求时间尽可能短，怎么办？
 
@@ -95,7 +95,7 @@ min: 4
 
 答：
 
-```
+``` java
 public class MinStack {
 
     private List<Integer> data = new ArrayList<Integer>();
@@ -275,7 +275,7 @@ public class MinStack {
 
 mins栈中改存最小值在data数组中的索引。当push了与最小值相同元素的时候，就不需要动mins栈。而pop的时候，pop出的元素的索引如果不是mins栈顶元素，mins也不出栈。同时，获取最小值的时候，需要拿到mins栈顶元素作为索引，再去data数组中找到相应的数作为最小值。
 
-```
+``` java
 public class MinStack {
 
     private List<Integer> data = new ArrayList<Integer>();
