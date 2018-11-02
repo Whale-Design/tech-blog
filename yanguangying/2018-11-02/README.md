@@ -60,7 +60,7 @@ Object.create();
     console.log(oco) 
     console.log(ocn) 
 ```
-![console结果](./console.png)
+![console结果](https://github.com/Whale-Design/tech-blog/blob/master/yanguangying/2018-11-02/pic/console.jpg?raw=true)
 
 
 ### 兼容处理
