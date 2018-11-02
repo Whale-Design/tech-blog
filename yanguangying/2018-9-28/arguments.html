@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+</head>
+<body>
+</body>
+</html>
+<script>
+
+  function sidEffecting(ary) {
+    ary[0] = ary[2];
+  }
+
+  function bar(a, b, ...rest) {
+    c = 10;
+    sidEffecting(arguments);
+    console.log(arguments);
+    console.log(a, b, c);
+    con
+    return a + b + c;
+  }
+  console.log(bar(1, 1, 2))
+  
+</script>
