@@ -19,6 +19,14 @@ class User implements SplSubject
     }
 
     /**
+     * 被观察者（用户）登录成功后通知观察者
+     */
+    public function login()
+    {
+        $this->notify();
+    }
+
+    /**
      * Attach an SplObserver
      * @link http://php.net/manual/en/splsubject.attach.php
      * @param SplObserver $observer <p>
